@@ -2,7 +2,6 @@ import {KEY_CODES} from './../helpers/unicode';
 import {extend} from './../helpers/object';
 import {setCaretPosition} from './../helpers/dom/element';
 import {stopImmediatePropagation, isImmediatePropagationStopped} from './../helpers/dom/event';
-import {getEditor, registerEditor} from './../editors';
 import TextEditor from './textEditor';
 
 const HandsontableEditor = TextEditor.prototype.extend();
@@ -118,7 +117,9 @@ HandsontableEditor.prototype.open = function() {
   if (this.htEditor) {
     this.htEditor.destroy();
   }
-  this.htEditor = new Handsontable(this.htContainer, this.htOptions);
+  // Construct and initialise a new Handsontable
+  this.htEditor = new this.instance.constructor(this.htContainer, this.htOptions);
+  this.htEditor.init();
 
   if (this.cellProperties.strict) {
     this.htEditor.selectCell(0, 0);
@@ -178,7 +179,5 @@ HandsontableEditor.prototype.assignHooks = function() {
     }
   });
 };
-
-registerEditor('handsontable', HandsontableEditor);
 
 export default HandsontableEditor;

@@ -976,6 +976,35 @@ describe('Core_validate', () => {
     }, 200);
   });
 
+  it('should remove htInvalid class properly after cancelling change, when physical indexes are not equal to visual indexes', (done) => {
+    handsontable({
+      data: Handsontable.helper.createSpreadsheetData(5, 2),
+      columnSorting: {
+        column: 0,
+        sortOrder: false
+      },
+      allowInvalid: false,
+      validator(value, callback) {
+        setTimeout(() => {
+          callback(value.length === 2);
+        }, 100);
+      }
+    });
+
+    selectCell(0, 0);
+    keyDown('enter');
+
+    document.activeElement.value = 'Ted';
+
+    keyDown('enter');
+
+    setTimeout(() => {
+      const $cell = $(getCell(0, 0));
+      expect($cell.hasClass('htInvalid')).toEqual(false);
+      done();
+    }, 200);
+  });
+
   it('should close the editor and save the new value if validation fails and allowInvalid is set to "true"', (done) => {
     var validated = false;
     var validationResult;
@@ -1319,7 +1348,7 @@ describe('Core_validate', () => {
     });
 
     selectCell(0, 0);
-    keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+    keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
     keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); // cancel editing
 
     setTimeout(() => {
@@ -1353,7 +1382,7 @@ describe('Core_validate', () => {
     });
 
     selectCell(0, 0);
-    keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+    keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
     keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); // cancel editing
 
     setTimeout(() => {
@@ -1384,7 +1413,7 @@ describe('Core_validate', () => {
       expect(getCellMeta(0, 0).valid).toBe(false);
 
       selectCell(0, 0);
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
       keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); // cancel editing
 
       expect(getCellMeta(0, 0).valid).toBe(false);
@@ -1426,7 +1455,7 @@ describe('Core_validate', () => {
       expect(getCellMeta(0, 0).valid).toBe(false);
 
       selectCell(0, 0);
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
       keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); // cancel editing
 
       expect(getCellMeta(0, 0).valid).toBe(false);
@@ -1474,11 +1503,11 @@ describe('Core_validate', () => {
 
       activeEditor.setValue(2);
 
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // save changes and move to cell below (row: 1, col: ś0)
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // save changes and move to cell below (row: 1, col: ś0)
     }, 200);
 
     setTimeout(() => {
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
 
       activeEditor = hot.getActiveEditor();
       expect(activeEditor.row).toEqual(1);
@@ -1538,11 +1567,11 @@ describe('Core_validate', () => {
 
       activeEditor.setValue(2);
 
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // save changes and move to cell below (row: 1, col: ś0)
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // save changes and move to cell below (row: 1, col: ś0)
     }, 200);
 
     setTimeout(() => {
-      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  // open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER); // open editor
 
       activeEditor = hot.getActiveEditor();
       expect(activeEditor.row).toEqual(1);

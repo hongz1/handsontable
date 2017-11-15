@@ -116,9 +116,9 @@ class ManualColumnMove extends BasePlugin {
     this.addHook('afterScrollVertically', () => this.onAfterScrollVertically());
     this.addHook('modifyCol', (row, source) => this.onModifyCol(row, source));
     this.addHook('beforeRemoveCol', (index, amount) => this.onBeforeRemoveCol(index, amount));
-    this.addHook('afterRemoveCol', (index, amount) => this.onAfterRemoveCol(index, amount));
+    this.addHook('afterRemoveCol', () => this.onAfterRemoveCol());
     this.addHook('afterCreateCol', (index, amount) => this.onAfterCreateCol(index, amount));
-    this.addHook('afterLoadData', (firstTime) => this.onAfterLoadData(firstTime));
+    this.addHook('afterLoadData', () => this.onAfterLoadData());
     this.addHook('unmodifyCol', (column) => this.onUnmodifyCol(column));
 
     this.registerEvents();
@@ -183,12 +183,12 @@ class ManualColumnMove extends BasePlugin {
     priv.disallowMoving = !beforeColumnHook;
 
     if (beforeColumnHook !== false) {
-      // first we need to rewrite an visual indexes to logical for save reference after move
+      // first we need to rewrite an visual indexes to physical for save reference after move
       arrayEach(columns, (column, index, array) => {
         array[index] = this.columnsMapper.getValueByIndex(column);
       });
 
-      // next, when we have got an logical indexes, we can move columns
+      // next, when we have got an physical indexes, we can move columns
       arrayEach(columns, (column, index) => {
         let actualPosition = this.columnsMapper.getIndexByValue(column);
 
@@ -235,7 +235,7 @@ class ManualColumnMove extends BasePlugin {
       let columnWidth = 0;
 
       if (i < 0) {
-        columnWidth = this.hot.view.wt.wtTable.getColumnWidth(i) || 0;
+        columnWidth = this.hot.view.wt.wtViewport.getRowHeaderWidth() || 0;
       } else {
         columnWidth = this.hot.view.wt.wtTable.getStretchedColumnWidth(i) || 0;
       }
@@ -428,7 +428,7 @@ class ManualColumnMove extends BasePlugin {
       let maxIndex = countCols - 1;
       let columnsToRemove = [];
 
-      arrayEach(this.columnsMapper._arrayMap, (value, index, array) => {
+      arrayEach(this.columnsMapper._arrayMap, (value, index) => {
         if (value > maxIndex) {
           columnsToRemove.push(index);
         }
@@ -461,10 +461,10 @@ class ManualColumnMove extends BasePlugin {
    * Change the behavior of selection / dragging.
    *
    * @private
-   * @param {MouseEvent} event
-   * @param {CellCoords} coords
-   * @param {HTMLElement} TD
-   * @param {Object} blockCalculations
+   * @param {MouseEvent} event `mousedown` event properties.
+   * @param {CellCoords} coords Visual cell coordinates where was fired event.
+   * @param {HTMLElement} TD Cell represented as HTMLElement.
+   * @param {Object} blockCalculations Object which contains information about blockCalculation for row, column or cells.
    */
   onBeforeOnCellMouseDown(event, coords, TD, blockCalculations) {
     let wtTable = this.hot.view.wt.wtTable;
@@ -559,7 +559,7 @@ class ManualColumnMove extends BasePlugin {
    *
    * @private
    * @param {MouseEvent} event `mouseover` event properties.
-   * @param {CellCoords} coords Cell coordinates where was fired event.
+   * @param {CellCoords} coords Visual cell coordinates where was fired event.
    * @param {HTMLElement} TD Cell represented as HTMLElement.
    * @param {Object} blockCalculations Object which contains information about blockCalculation for row, column or cells.
    */
@@ -639,7 +639,7 @@ class ManualColumnMove extends BasePlugin {
    * `afterCreateCol` hook callback.
    *
    * @private
-   * @param {Number} index Index of the created column.
+   * @param {Number} index Visual index of the created column.
    * @param {Number} amount Amount of created columns.
    */
   onAfterCreateCol(index, amount) {
@@ -650,7 +650,7 @@ class ManualColumnMove extends BasePlugin {
    * On before remove column listener.
    *
    * @private
-   * @param {Number} index Column index.
+   * @param {Number} index Visual column index.
    * @param {Number} amount Defines how many columns removed.
    */
   onBeforeRemoveCol(index, amount) {
@@ -668,10 +668,8 @@ class ManualColumnMove extends BasePlugin {
    * `afterRemoveCol` hook callback.
    *
    * @private
-   * @param {Number} index Index of the removed column.
-   * @param {Number} amount Amount of removed columns.
    */
-  onAfterRemoveCol(index, amount) {
+  onAfterRemoveCol() {
     this.columnsMapper.unshiftItems(this.removedColumns);
   }
 
@@ -679,9 +677,8 @@ class ManualColumnMove extends BasePlugin {
    * `afterLoadData` hook callback.
    *
    * @private
-   * @param {Boolean} firstTime True if that was loading data during the initialization.
    */
-  onAfterLoadData(firstTime) {
+  onAfterLoadData() {
     this.updateColumnsMapper();
   }
 
@@ -690,7 +687,7 @@ class ManualColumnMove extends BasePlugin {
    *
    * @private
    * @param {Number} column Visual column index.
-   * @returns {Number} Modified column index.
+   * @returns {Number} Physical column index.
    */
   onModifyCol(column, source) {
     if (source !== this.pluginName) {
@@ -706,8 +703,8 @@ class ManualColumnMove extends BasePlugin {
    * 'unmodifyCol' hook callback.
    *
    * @private
-   * @param {Number} column Visual column index.
-   * @returns {Number} Logical column index.
+   * @param {Number} column Physical column index.
+   * @returns {Number} Visual column index.
    */
   onUnmodifyCol(column) {
     let indexInMapper = this.columnsMapper.getIndexByValue(column);

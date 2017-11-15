@@ -4,8 +4,12 @@ import './css/bootstrap.css';
 import './css/handsontable.css';
 import './css/mobile.handsontable.css';
 
+import {getRegisteredEditorNames, registerEditor, getEditor} from './editors';
+import {getRegisteredRendererNames, getRenderer, registerRenderer} from './renderers';
+import {getRegisteredValidatorNames, getValidator, registerValidator} from './validators';
+import {getRegisteredCellTypeNames, getCellType, registerCellType} from './cellTypes';
+
 import Core from './core';
-import './renderers/_cellDecorator';
 import jQueryWrapper from './helpers/wrappers/jquery';
 import EventManager, {getListenersCounter} from './eventManager';
 import Hooks from './pluginHooks';
@@ -24,15 +28,13 @@ import * as stringHelpers from './helpers/string';
 import * as unicodeHelpers from './helpers/unicode';
 import * as domHelpers from './helpers/dom/element';
 import * as domEventHelpers from './helpers/dom/event';
-import {getRegisteredEditorNames, registerEditor, getEditor, getEditorConstructor} from './editors';
-import {getRegisteredRendererNames, getRenderer, registerRenderer} from './renderers';
 import * as plugins from './plugins/index';
 import {registerPlugin} from './plugins';
-import cellTypes from './cellTypes';
 import DefaultSettings from './defaultSettings';
+import {rootInstanceSymbol} from './utils/rootInstance';
 
 function Handsontable(rootElement, userSettings) {
-  const instance = new Core(rootElement, userSettings || {});
+  const instance = new Core(rootElement, userSettings || {}, rootInstanceSymbol);
 
   instance.init();
 
@@ -46,11 +48,11 @@ Handsontable.DefaultSettings = DefaultSettings;
 Handsontable.EventManager = EventManager;
 Handsontable._getListenersCounter = getListenersCounter; // For MemoryLeak tests
 
-Handsontable.buildDate = __HOT_BUILD_DATE__;
-Handsontable.packageName = __HOT_PACKAGE_NAME__;
-Handsontable.version = __HOT_VERSION__;
+Handsontable.buildDate = process.env.HOT_BUILD_DATE;
+Handsontable.packageName = process.env.HOT_PACKAGE_NAME;
+Handsontable.version = process.env.HOT_VERSION;
 
-const baseVersion = __HOT_BASE_VERSION__;
+const baseVersion = process.env.HOT_BASE_VERSION;
 
 if (baseVersion) {
   Handsontable.baseVersion = baseVersion;
@@ -107,15 +109,18 @@ arrayHelpers.arrayEach(DOM, (helper) => {
 // Export cell types.
 Handsontable.cellTypes = {};
 
-arrayHelpers.arrayEach(Object.getOwnPropertyNames(cellTypes), (key) => {
-  Handsontable.cellTypes[key] = cellTypes[key];
+arrayHelpers.arrayEach(getRegisteredCellTypeNames(), (cellTypeName) => {
+  Handsontable.cellTypes[cellTypeName] = getCellType(cellTypeName);
 });
+
+Handsontable.cellTypes.registerCellType = registerCellType;
+Handsontable.cellTypes.getCellType = getCellType;
 
 // Export all registered editors from the Handsontable.
 Handsontable.editors = {};
 
 arrayHelpers.arrayEach(getRegisteredEditorNames(), (editorName) => {
-  Handsontable.editors[`${stringHelpers.toUpperCaseFirst(editorName)}Editor`] = getEditorConstructor(editorName);
+  Handsontable.editors[`${stringHelpers.toUpperCaseFirst(editorName)}Editor`] = getEditor(editorName);
 });
 
 Handsontable.editors.registerEditor = registerEditor;
@@ -139,11 +144,12 @@ Handsontable.renderers.getRenderer = getRenderer;
 // Export all registered validators from the Handsontable.
 Handsontable.validators = {};
 
-arrayHelpers.arrayEach(Object.getOwnPropertyNames(cellTypes), (key) => {
-  if (cellTypes[key].validator) {
-    Handsontable.validators[`${stringHelpers.toUpperCaseFirst(key)}Validator`] = cellTypes[key].validator;
-  }
+arrayHelpers.arrayEach(getRegisteredValidatorNames(), (validatorName) => {
+  Handsontable.validators[`${stringHelpers.toUpperCaseFirst(validatorName)}Validator`] = getValidator(validatorName);
 });
+
+Handsontable.validators.registerValidator = registerValidator;
+Handsontable.validators.getValidator = getValidator;
 
 // Export all registered plugins from the Handsontable.
 Handsontable.plugins = {};
@@ -160,5 +166,4 @@ arrayHelpers.arrayEach(Object.getOwnPropertyNames(plugins), (pluginName) => {
 
 Handsontable.plugins.registerPlugin = registerPlugin;
 
-// Export Handsontable
-module.exports = Handsontable;
+export default Handsontable;

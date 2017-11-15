@@ -12,7 +12,6 @@ import {
   removeClass,
   setCaretPosition,
 } from './../helpers/dom/element';
-import {getEditor, registerEditor} from './../editors';
 import BaseEditor from './_baseEditor';
 import EventManager from './../eventManager';
 
@@ -181,9 +180,9 @@ MobileTextEditor.prototype.updateEditorPosition = function(x, y) {
 
     if (selectedCell !== undefined) {
       var scrollLeft = this.instance.view.wt.wtOverlays.leftOverlay
-          .trimmingContainer == window ? 0 : getScrollLeft(this.instance.view.wt.wtOverlays.leftOverlay.holder);
+        .trimmingContainer == window ? 0 : getScrollLeft(this.instance.view.wt.wtOverlays.leftOverlay.holder);
       var scrollTop = this.instance.view.wt.wtOverlays.topOverlay
-          .trimmingContainer == window ? 0 : getScrollTop(this.instance.view.wt.wtOverlays.topOverlay.holder);
+        .trimmingContainer == window ? 0 : getScrollTop(this.instance.view.wt.wtOverlays.topOverlay.holder);
 
       var selectedCellOffset = offset(selectedCell),
         selectedCellWidth = outerWidth(selectedCell),
@@ -315,7 +314,5 @@ MobileTextEditor.prototype.destroy = function() {
 
   this.editorContainer.parentNode.removeChild(this.editorContainer);
 };
-
-registerEditor('mobile', MobileTextEditor);
 
 export default MobileTextEditor;

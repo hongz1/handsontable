@@ -23,8 +23,8 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
- * Version: 0.32.0-beta1
- * Date: Wed May 17 2017 14:42:22 GMT+0200 (CEST)
+ * Version: 0.34.5
+ * Release date: 12/10/2017 (built at 12/10/2017 10:04:29)
  */
 /**
  * Fix for bootstrap styles
@@ -41,12 +41,12 @@
   background-color: inherit;
 }
 
-.table caption + thead tr:first-child th,
-.table caption + thead tr:first-child td,
-.table colgroup + thead tr:first-child th,
-.table colgroup + thead tr:first-child td,
-.table thead:first-child tr:first-child th,
-.table thead:first-child tr:first-child td {
+.handsontable .table caption + thead tr:first-child th,
+.handsontable .table caption + thead tr:first-child td,
+.handsontable .table colgroup + thead tr:first-child th,
+.handsontable .table colgroup + thead tr:first-child td,
+.handsontable .table thead:first-child tr:first-child th,
+.handsontable .table thead:first-child tr:first-child td {
   border-top: 1px solid #CCCCCC;
 }
 
@@ -66,7 +66,12 @@
   border-left: 1px solid #CCCCCC;
 }
 
-.table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead > tr > td, .table > thead > tr > th {
+.handsontable .table > tbody > tr > td,
+.handsontable .table > tbody > tr > th,
+.handsontable .table > tfoot > tr > td,
+.handsontable .table > tfoot > tr > th,
+.handsontable .table > thead > tr > td,
+.handsontable .table > thead > tr > th {
   line-height: 21px;
   padding: 0 4px;
 }
@@ -83,7 +88,7 @@
   padding-right: 0;
 }
 
-.table-striped > tbody > tr:nth-of-type(even) {
+.handsontable .table-striped > tbody > tr:nth-of-type(even) {
   background-color: #FFF;
 }
 .handsontable {
@@ -134,14 +139,14 @@
 
 .handsontable table.htCore {
   border-collapse: separate;
-  /*it must be separate, otherwise there are offset miscalculations in WebKit: http://stackoverflow.com/questions/2655987/border-collapse-differences-in-ff-and-webkit*/
-  /*this actually only changes appearance of user selection - does not make text unselectable
-  -webkit-user-select: none;
+  /* it must be separate, otherwise there are offset miscalculations in WebKit: http://stackoverflow.com/questions/2655987/border-collapse-differences-in-ff-and-webkit */
+  /* this actually only changes appearance of user selection - does not make text unselectable */
+  /* -webkit-user-select: none;
   -khtml-user-select: none;
   -moz-user-select: none;
   -o-user-select: none;
   -ms-user-select: none;
-  /*user-select: none; /*no browser supports unprefixed version*/
+  user-select: none; */ /* no browser supports unprefixed version */
   border-spacing: 0;
   margin: 0;
   border-width: 0;
@@ -260,6 +265,14 @@
 .handsontable.ht__selection--rows tbody th.ht__highlight {
   background-color: #8eb0e7;
   color: #000;
+}
+
+#hot-display-license-info {
+  font-size: 9px;
+  color: #323232 ;
+  padding: 5px 0 3px 0;
+  font-family: Helvetica, Arial, sans-serif;
+  text-align: left;
 }
 
 /* plugins */
@@ -386,7 +399,7 @@
   box-shadow: 0 0 0 2px #5292F7 inset;
   resize: none;
   /*below are needed to overwrite stuff added by jQuery UI Bootstrap theme*/
-  display: inline-block;
+  display: block;
   color: #000;
   border-radius: 0;
   background-color: #FFF;
@@ -1246,7 +1259,8 @@ http://nicolasgallagher.com/micro-clearfix-hack/
     border-radius: 3px;
 }
 
-.is-disabled .pika-button {
+.is-disabled .pika-button,
+.is-outside-current-month .pika-button {
     pointer-events: none;
     cursor: default;
     color: #999;
@@ -1391,6 +1405,14 @@ http://nicolasgallagher.com/micro-clearfix-hack/
 
 .htContextMenu .ht_master .wtHolder {
   overflow: hidden;
+}
+textarea#HandsontableCopyPaste {
+  position: fixed !important;
+  top: 0 !important;
+  right: 100% !important;
+  overflow: hidden;
+  opacity: 0;
+  outline: 0 none !important;
 }
 .htRowHeaders .ht_master.innerBorderLeft ~ .ht_clone_top_left_corner th:nth-child(2),
 .htRowHeaders .ht_master.innerBorderLeft ~ .ht_clone_left td:first-of-type {

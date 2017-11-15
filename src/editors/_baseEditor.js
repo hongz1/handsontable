@@ -1,5 +1,4 @@
 import {CellCoords} from './../3rdparty/walkontable/src';
-import {registerEditor} from './../editors';
 import {stringify} from './../helpers/mixed';
 
 export const EditorState = {
@@ -52,16 +51,6 @@ BaseEditor.prototype.prepare = function(row, col, prop, td, originalValue, cellP
   this.prop = prop;
   this.originalValue = originalValue;
   this.cellProperties = cellProperties;
-
-  let invalidActiveElement = !document.activeElement || (document.activeElement && document.activeElement.nodeName === void 0);
-
-  if (this.instance.view.isMouseDown() && document.activeElement && document.activeElement !== document.body && !invalidActiveElement) {
-    document.activeElement.blur();
-
-  } else if (invalidActiveElement) { // IE
-    document.body.focus();
-  }
-
   this.state = EditorState.VIRGIN;
 };
 
@@ -267,7 +256,5 @@ BaseEditor.prototype.checkEditorSection = function() {
 
   return section;
 };
-
-registerEditor('base', BaseEditor);
 
 export default BaseEditor;

@@ -41,6 +41,24 @@ describe('HandsontableEditor', () => {
     expect(this.$container.find('.handsontableEditor:visible').length).toEqual(1);
   });
 
+  it('should create an editor directly below the textarea element', function() {
+    handsontable({
+      columns: [
+        {
+          type: 'handsontable',
+          handsontable: {
+            colHeaders: ['Marque', 'Country', 'Parent company'],
+            data: getManufacturerData()
+          }
+        }
+      ]
+    });
+    selectCell(2, 0);
+
+    keyDownUp('enter');
+    expect(this.$container.find('.handsontableEditor')[0].offsetTop).toEqual(this.$container.find('.handsontableInput')[0].offsetHeight);
+  });
+
   it('should destroy the editor when Esc is pressed', function() {
     handsontable({
       columns: [
@@ -205,7 +223,7 @@ describe('HandsontableEditor', () => {
 
       keyDownUp('enter');
 
-      var ht = Handsontable.editors.getEditor('handsontable', hot);
+      var ht = hot.getActiveEditor();
       var innerHot = ht.htEditor;
 
       expect(innerHot.getSelected()).toEqual([0, 0, 0, 0]);
@@ -251,7 +269,7 @@ describe('HandsontableEditor', () => {
 
       keyDownUp('enter');
 
-      var ht = Handsontable.editors.getEditor('handsontable', hot);
+      var ht = hot.getActiveEditor();
       var innerHot = ht.htEditor;
 
       expect(innerHot.getSelected()).toBeUndefined();

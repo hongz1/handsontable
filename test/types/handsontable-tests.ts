@@ -1,5 +1,6 @@
 import Handsontable from '../../handsontable';
 
+var test = Handsontable.plugins.CopyPaste.columnsLimit;
 var elem = document.createElement('div');
 var hot = new Handsontable(elem, {
   allowEmpty: true,
@@ -328,6 +329,7 @@ function test_HandsontableMethods() {
   hot.setCellMeta(123, 123, 'foo', 'foo');
   hot.setCellMetaObject(123, 123, {});
   hot.setDataAtCell(123, 123, 'foo', 'foo');
+  hot.setDataAtCell(123, 123, {myProperty: 'foo'}, 'foo');
   hot.setDataAtRowProp(123, 'foo', 'foo', 'foo');
   hot.spliceCol(123, 123, 123, 'foo');
   hot.spliceRow(123, 123, 123, 'foo');

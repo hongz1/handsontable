@@ -114,9 +114,9 @@ class ManualRowMove extends BasePlugin {
     this.addHook('afterScrollHorizontally', () => this.onAfterScrollHorizontally());
     this.addHook('modifyRow', (row, source) => this.onModifyRow(row, source));
     this.addHook('beforeRemoveRow', (index, amount) => this.onBeforeRemoveRow(index, amount));
-    this.addHook('afterRemoveRow', (index, amount) => this.onAfterRemoveRow(index, amount));
+    this.addHook('afterRemoveRow', () => this.onAfterRemoveRow());
     this.addHook('afterCreateRow', (index, amount) => this.onAfterCreateRow(index, amount));
-    this.addHook('afterLoadData', (firstTime) => this.onAfterLoadData(firstTime));
+    this.addHook('afterLoadData', () => this.onAfterLoadData());
     this.addHook('beforeColumnSort', (column, order) => this.onBeforeColumnSort(column, order));
     this.addHook('unmodifyRow', (row) => this.onUnmodifyRow(row));
 
@@ -182,12 +182,12 @@ class ManualRowMove extends BasePlugin {
     priv.disallowMoving = beforeMoveHook === false;
 
     if (!priv.disallowMoving) {
-      // first we need to rewrite an visual indexes to logical for save reference after move
+      // first we need to rewrite an visual indexes to physical for save reference after move
       arrayEach(rows, (row, index, array) => {
         array[index] = this.rowsMapper.getValueByIndex(row);
       });
 
-      // next, when we have got an logical indexes, we can move rows
+      // next, when we have got an physical indexes, we can move rows
       arrayEach(rows, (row, index) => {
         let actualPosition = this.rowsMapper.getIndexByValue(row);
 
@@ -359,10 +359,6 @@ class ManualRowMove extends BasePlugin {
     let backlightElemMarginTop = this.backlight.getOffset().top;
     let backlightElemHeight = this.backlight.getSize().height;
 
-    if ((rootElementOffset.top + wtTable.holder.offsetHeight) < priv.target.eventPageY) {
-      priv.target.coords.row++;
-    }
-
     if (this.isFixedRowTop(coords.row)) {
       tdOffsetTop += wtTable.holder.scrollTop;
     }
@@ -438,7 +434,7 @@ class ManualRowMove extends BasePlugin {
       let maxIndex = countRows - 1;
       let rowsToRemove = [];
 
-      arrayEach(this.rowsMapper._arrayMap, (value, index, array) => {
+      arrayEach(this.rowsMapper._arrayMap, (value, index) => {
         if (value > maxIndex) {
           rowsToRemove.push(index);
         }
@@ -485,7 +481,7 @@ class ManualRowMove extends BasePlugin {
    *
    * @private
    * @param {MouseEvent} event
-   * @param {CellCoords} coords
+   * @param {CellCoords} coords Visual coordinates.
    * @param {HTMLElement} TD
    * @param {Object} blockCalculations
    */
@@ -522,7 +518,7 @@ class ManualRowMove extends BasePlugin {
       priv.target.TD = TD;
       priv.rowsToMove = this.prepareRowsToMoving();
 
-      let leftPos = wtTable.holder.scrollLeft + wtTable.getColumnWidth(-1);
+      let leftPos = wtTable.holder.scrollLeft + this.hot.view.wt.wtViewport.getRowHeaderWidth();
 
       this.backlight.setPosition(null, leftPos);
       this.backlight.setSize(wtTable.hider.offsetWidth - leftPos, this.getRowsHeight(start, end + 1));
@@ -571,7 +567,7 @@ class ManualRowMove extends BasePlugin {
    *
    * @private
    * @param {MouseEvent} event `mouseover` event properties.
-   * @param {CellCoords} coords Cell coordinates where was fired event.
+   * @param {CellCoords} coords Visual cell coordinates where was fired event.
    * @param {HTMLElement} TD Cell represented as HTMLElement.
    * @param {Object} blockCalculations Object which contains information about blockCalculation for row, column or cells.
    */
@@ -642,7 +638,7 @@ class ManualRowMove extends BasePlugin {
    */
   onAfterScrollHorizontally() {
     let wtTable = this.hot.view.wt.wtTable;
-    let headerWidth = wtTable.getColumnWidth(-1);
+    let headerWidth = this.hot.view.wt.wtViewport.getRowHeaderWidth();
     let scrollLeft = wtTable.holder.scrollLeft;
     let posLeft = headerWidth + scrollLeft;
 
@@ -654,7 +650,7 @@ class ManualRowMove extends BasePlugin {
    * `afterCreateRow` hook callback.
    *
    * @private
-   * @param {Number} index Index of the created row.
+   * @param {Number} index Visual index of the created row.
    * @param {Number} amount Amount of created rows.
    */
   onAfterCreateRow(index, amount) {
@@ -665,7 +661,7 @@ class ManualRowMove extends BasePlugin {
    * On before remove row listener.
    *
    * @private
-   * @param {Number} index Row index.
+   * @param {Number} index Visual row index.
    * @param {Number} amount Defines how many rows removed.
    */
   onBeforeRemoveRow(index, amount) {
@@ -683,10 +679,8 @@ class ManualRowMove extends BasePlugin {
    * `afterRemoveRow` hook callback.
    *
    * @private
-   * @param {Number} index Index of the removed row.
-   * @param {Number} amount Amount of removed rows.
    */
-  onAfterRemoveRow(index, amount) {
+  onAfterRemoveRow() {
     this.rowsMapper.unshiftItems(this.removedRows);
   }
 
@@ -694,9 +688,8 @@ class ManualRowMove extends BasePlugin {
    * `afterLoadData` hook callback.
    *
    * @private
-   * @param {Boolean} firstTime True if that was loading data during the initialization.
    */
-  onAfterLoadData(firstTime) {
+  onAfterLoadData() {
     this.updateRowsMapper();
   }
 
@@ -705,7 +698,7 @@ class ManualRowMove extends BasePlugin {
    *
    * @private
    * @param {Number} row Visual Row index.
-   * @returns {Number} Modified row index.
+   * @returns {Number} Physical row index.
    */
   onModifyRow(row, source) {
     if (source !== this.pluginName) {
@@ -720,8 +713,8 @@ class ManualRowMove extends BasePlugin {
    * 'unmodifyRow' hook callback.
    *
    * @private
-   * @param {Number} row Visual row index.
-   * @returns {Number} Logical row index.
+   * @param {Number} row Physical row index.
+   * @returns {Number} Visual row index.
    */
   onUnmodifyRow(row) {
     let indexInMapper = this.rowsMapper.getIndexByValue(row);

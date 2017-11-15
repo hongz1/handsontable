@@ -87,7 +87,7 @@ function TableView(instance) {
 
     isMouseDown = false;
 
-    if (isOutsideInput(document.activeElement)) {
+    if (isOutsideInput(document.activeElement) || !instance.selection.isSelected()) {
       instance.unlisten();
     }
   });
@@ -546,7 +546,7 @@ function TableView(instance) {
       event.preventDefault();
 
       const lineHeight = parseInt(getComputedStyle(document.body)['font-size'], 10);
-      const holder = hot.view.wt.wtOverlays.scrollableElement;
+      const holder = that.wt.wtOverlays.scrollableElement;
 
       let deltaY = event.wheelDeltaY || event.deltaY;
       let deltaX = event.wheelDeltaX || event.deltaX;

@@ -1,3 +1,4 @@
+
 declare namespace _Handsontable {
   namespace wot {
     interface CellCoords {
@@ -191,9 +192,39 @@ declare namespace _Handsontable {
   }
 
   namespace plugins {
-
     // utils for Filters
     namespace FiltersPlugin {
+      type OperationType = 'conjunction' | 'disjunction';
+      type ConditionName = 'begins_with' | 'between' | 'by_value' | 'contains' | 'empty' | 'ends_with' | 'eq' | 'gt' |
+        'gte' | 'lt' | 'lte' | 'not_between' | 'not_contains' | 'not_empty' | 'neq';
+
+      interface ConditionId {
+        args: any[];
+        name?: ConditionName
+        command?: {
+          key: ConditionName
+        }
+      }
+
+      interface Condition {
+        name: ConditionName,
+        args: any[];
+        func: (dataRow: CellValue, values: any[]) => boolean
+      }
+
+      interface CellLikeData {
+        meta: {
+          row: number,
+          col: number,
+          visualCol: number,
+          visualRow: number,
+          type: string,
+          instance: Core,
+          dateFormat?: string
+        },
+        value: string
+      }
+
       interface BaseComponent {
         elements: any[];
         hidden: boolean;
@@ -266,36 +297,36 @@ declare namespace _Handsontable {
         closeOptions(): void;
       }
 
-      interface FormulaCollection {
-        formulas: object;
+      interface ConditionCollection {
+        conditions: object;
         orderStack: any[];
 
-        addFormula(column: number, formulaDefinition: object): void;
+        addCondition(column: number, conditionDefinition: ConditionId, operation?: OperationType): void;
         clean(): void;
-        clearFormulas(column: number): void;
+        clearConditions(column: number): void;
         destroy(): void;
-        exportAllFormulas(): any[];
-        getFormulas(column: number): any[];
-        hasFormulas(column: number, name: string): boolean;
+        exportAllConditions(): ConditionId[];
+        getConditions(column: number): Condition[];
+        hasConditions(column: number, name: string): boolean;
         isEmpty(): boolean;
-        isMatch(value: object, column: number): boolean;
-        isMatchInFormulas(formulas: any[], value: object): boolean;
-        importAllFormulas(formulas: any[]): void;
-        removeFormulas(column: number): void;
+        isMatch(value: CellLikeData, column: number): boolean;
+        isMatchInConditions(conditions: Condition[], value: CellLikeData, operationType?: OperationType): boolean;
+        importAllConditions(conditions: ConditionId[]): void;
+        removeConditions(column: number): void;
       }
 
-      interface FormulaUpdateObserver {
-        changes: any[];
-        columnDataFactory: (column: number) => any[];
-        formulaCollection: FormulaCollection;
+      interface ConditionUpdateObserver {
+        changes: number[];
+        columnDataFactory: (column: number) => object[];
+        conditionCollection: ConditionCollection;
         grouping: boolean;
         latestEditedColumnPosition: number;
-        latestOrderStack: any[];
+        latestOrderStack: number[];
 
         destroy(): void;
         flush(): void;
         groupChanges(): void;
-        updateStatesAtColumn(column: number, formulaArgsChange: object): void;
+        updateStatesAtColumn(column: number, conditionArgsChange: object): void;
       }
     }
 
@@ -637,12 +668,38 @@ declare namespace _Handsontable {
       open(event: Event): void;
     }
 
-    interface ContextMenuCopyPaste extends Base {
-      eventManager: EventManager;
-      outsideClickDeselectsCache: boolean | void;
-      swfPath: string | void;
+    interface Textarea {
+      element: HTMLElement;
+      isAppended: boolean;
+      refCounter: number;
 
-      getCopyValue(): string;
+      append(): void;
+      create(): void;
+      deselect(): void;
+      destroy(): void;
+      getValue(): string;
+      hasBeenDestroyed(): boolean;
+      isActive(): boolean;
+      select(): void;
+      setValue(data: string): void;
+    }
+
+    type PasteModeType = 'overwrite' | 'shift_down' | 'shift_right';
+    type RangeType = {startRow: number, startCol: number, endRow: number, endCol: number};
+    interface CopyPaste extends Base {
+      eventManager: EventManager;
+      columnsLimit: number;
+      copyableRanges: any[];
+      pasteMode: PasteModeType;
+      rowsLimit: number;
+      textarea: Textarea;
+
+      setCopyableText(): void;
+      getRangedCopyableData(ranges: RangeType[]): string;
+      getRangedData(ranges: RangeType[]): any[];
+      copy(triggeredByClick?: boolean): void;
+      cut(triggeredByClick?: boolean): void;
+      paste(triggeredByClick?: boolean): void;
     }
 
     interface DragToScroll extends Base {
@@ -680,19 +737,19 @@ declare namespace _Handsontable {
       dropdownMenuPlugin: DropdownMenu | void;
       eventManager: EventManager;
       conditionComponent: FiltersPlugin.ConditionComponent | void;
-      formulaCollection: FiltersPlugin.FormulaCollection | void;
-      formulaUpdateObserver: FiltersPlugin.FormulaUpdateObserver | void;
+      conditionCollection: FiltersPlugin.ConditionCollection | void;
+      conditionUpdateObserver: FiltersPlugin.ConditionUpdateObserver | void;
       lastSelectedColumn?: number | void;
       trimRowsPlugin: TrimRows | void;
       valueComponent: FiltersPlugin.ValueComponent | void;
 
-      addFormula(column: number, name: string, args: any[]): void;
+      addCondition(column: number, name: string, args: any[], operationId: FiltersPlugin.OperationType): void;
       clearColumnSelection(): void;
-      clearFormulas(column?: number | void): void;
-      getDataMapAtColumn(column: number): any[];
+      clearConditions(column?: number | void): void;
+      getDataMapAtColumn(column: number): FiltersPlugin.CellLikeData[];
       getSelectedColumn(): number | void;
       filter(): void;
-      removeFormulas(column: number): void;
+      removeConditions(column: number): void;
     }
 
     interface RecordTranslator {
@@ -1540,7 +1597,7 @@ declare namespace _Handsontable {
     selectCellByProp(row: number, prop: string, endRow?: number, endProp?: string, scrollToCell?: boolean): boolean;
     setCellMeta(row: number, col: number, key: string, val: string): void;
     setCellMetaObject(row: number, col: number, prop: object): void;
-    setDataAtCell(row: number | any[], col: number, value: string, source?: string): void;
+    setDataAtCell(row: number | any[], col: number, value: string | object, source?: string): void;
     setDataAtRowProp(row: number | any[], prop: string, value: string, source?: string): void;
     spliceCol(col: number, index: number, amount: number, elements?: any): void;
     spliceRow(row: number, index: number, amount: number, elements?: any): void;
@@ -1744,7 +1801,7 @@ declare namespace _Handsontable {
     ColumnSummary: plugins.ColumnSummary,
     Comments: plugins.Comments,
     ContextMenu: plugins.ContextMenu,
-    ContextMenuCopyPaste: plugins.ContextMenuCopyPaste,
+    CopyPaste: plugins.CopyPaste,
     DragToScroll: plugins.DragToScroll,
     DropdownMenu: plugins.DropdownMenu,
     ExportFile: plugins.ExportFile,
@@ -1794,6 +1851,7 @@ declare namespace _Handsontable {
     }
   }
 }
+
 
 export default class Handsontable extends _Handsontable.Core {
   static baseVersion: string;

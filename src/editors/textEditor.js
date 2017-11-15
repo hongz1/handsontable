@@ -1,21 +1,20 @@
 import {
-    addClass,
-    getCaretPosition,
-    getComputedStyle,
-    getCssTransform,
-    getScrollableElement,
-    getScrollbarWidth,
-    innerWidth,
-    offset,
-    resetCssTransform,
-    setCaretPosition,
-    hasVerticalScrollbar,
-    hasHorizontalScrollbar
+  addClass,
+  getCaretPosition,
+  getComputedStyle,
+  getCssTransform,
+  getScrollableElement,
+  getScrollbarWidth,
+  innerWidth,
+  offset,
+  resetCssTransform,
+  setCaretPosition,
+  hasVerticalScrollbar,
+  hasHorizontalScrollbar
 } from './../helpers/dom/element';
 import autoResize from './../../lib/autoResize/autoResize';
 import BaseEditor, {EditorState} from './_baseEditor';
 import EventManager from './../eventManager';
-import {getEditor, registerEditor} from './../editors';
 import {KEY_CODES} from './../helpers/unicode';
 import {stopPropagation, stopImmediatePropagation, isImmediatePropagationStopped} from './../helpers/dom/event';
 
@@ -389,7 +388,5 @@ TextEditor.prototype.bindEvents = function() {
 TextEditor.prototype.destroy = function() {
   this.eventManager.destroy();
 };
-
-registerEditor('text', TextEditor);
 
 export default TextEditor;

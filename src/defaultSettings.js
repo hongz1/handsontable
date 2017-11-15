@@ -1,4 +1,5 @@
 import {isDefined} from './helpers/mixed';
+import {isObjectEquals} from './helpers/object';
 
 /**
  * @alias Options
@@ -58,7 +59,7 @@ import {isDefined} from './helpers/mixed';
  *
  * ##### 3. Cells
  *
- * Configuration options that are provided using second-level function `handsontable(container, {cells: function: (row, col, prop){ }})`
+ * Configuration options that are provided using third-level function `handsontable(container, {cells: function: (row, col, prop){ }})`
  *
  * ---
  * ## Architecture performance
@@ -72,6 +73,15 @@ import {isDefined} from './helpers/mixed';
 function DefaultSettings() {};
 
 DefaultSettings.prototype = {
+  /**
+   * License key for commercial version of Handsontable.
+   *
+   * @pro
+   * @type {String}
+   * @default 'trial'
+   */
+  licenseKey: 'trial',
+
   /**
    * @description
    * Initial data source that will be bound to the data grid __by reference__ (editing data grid alters the data source).
@@ -198,6 +208,30 @@ DefaultSettings.prototype = {
    *
    * @type {Array|Function|Number|String}
    * @default undefined
+   * @example
+   * ```js
+   * ...
+   * // as numeric, for each column.
+   * colWidths: 100,
+   * ...
+   *
+   * * ...
+   * // as string, for each column.
+   * colWidths: '100px',
+   * ...
+   *
+   * ...
+   * // as array, based on visual indexes. The rest of the columns have a default width.
+   * colWidths: [100, 120, 90],
+   * ...
+   *
+   * ...
+   * // as function, based on visual indexes.
+   * colWidths: function(index) {
+   *   return index * 10;
+   * },
+   * ...
+   * ```
    */
   colWidths: void 0,
 
@@ -205,9 +239,36 @@ DefaultSettings.prototype = {
    * Defines row heights in pixels. Accepts numbers, strings (that will be converted into a number),
    * array of numbers (if you want to define row height separately for each row) or a
    * function (if you want to set row height dynamically on each render).
+   * If the ManualRowResize or AutoRowSize plugins are enabled, this is also the minimum height that can be set
+   * via either of those two plugins.
+   * Height should be equal or greater than 23px. Table is rendered incorrectly if height is less than 23px.
    *
    * @type {Array|Function|Number|String}
    * @default undefined
+   * @example
+   * ```js
+   * ...
+   * // as numeric, for each row.
+   * rowHeights: 100,
+   * ...
+   *
+   * * ...
+   * // as string, for each row.
+   * rowHeights: '100px',
+   * ...
+   *
+   * ...
+   * // as array, based on visual indexes. The rest of the rows have a default height.
+   * rowHeights: [100, 120, 90],
+   * ...
+   *
+   * ...
+   * // as function, based on visual indexes.
+   * rowHeights: function(index) {
+   *   return index * 10;
+   * },
+   * ...
+   * ```
    */
   rowHeights: void 0,
 
@@ -219,11 +280,12 @@ DefaultSettings.prototype = {
    *
    * See [documentation -> datasources.html](http://docs.handsontable.com/tutorial-data-sources.html#page-nested) for examples.
    *
-   * @type {Array}
+   * @type {Array|Function}
    * @default undefined
    * @example
    * ```js
    * ...
+   * // as an array of objects. Order of the objects in array is representation of physical indexes.
    * columns: [
    *   {
    *     // column options for the first column
@@ -237,6 +299,16 @@ DefaultSettings.prototype = {
    *   }
    * ],
    * ...
+   *
+   * // or as function, based on physical indexes
+   * ...
+   * columns: function(index) {
+ *    return {
+ *      type: index > 0 ? 'numeric' : 'text',
+ *      readOnly: index < 1
+ *    }
+   * }
+   * ...
    * ```
    */
   columns: void 0,
@@ -249,6 +321,10 @@ DefaultSettings.prototype = {
    *
    * __Note:__ Parameters `row` and `col` always represent __physical indexes__. Example below show how to execute
    * operations based on the __visual__ representation of Handsontable.
+   *
+   * Possible values of `prop`:
+   * - property name for column's data source object, when dataset is an [array of objects](/tutorial-data-sources.html#page-object)
+   * - the same number as `col`, when dataset is an [array of arrays](/tutorial-data-sources.html#page-array)
    *
    * @type {Function}
    * @default undefined
@@ -567,34 +643,6 @@ DefaultSettings.prototype = {
   autoWrapCol: false,
 
   /**
-   * Maximum number of rows than can be copied to clipboard using <kbd>CTRL</kbd> + <kbd>C</kbd>.
-   *
-   * @type {Number}
-   * @default 1000
-   */
-  copyRowsLimit: 1000,
-
-  /**
-   * Maximum number of columns than can be copied to clipboard using <kbd>CTRL</kbd> + <kbd>C</kbd>.
-   *
-   * @type {Number}
-   * @default 1000
-   */
-  copyColsLimit: 1000,
-
-  /**
-   * @description
-   * Defines paste (<kbd>CTRL</kbd> + <kbd>V</kbd>) behavior.
-   * * Default value `"overwrite"` will paste clipboard value over current selection.
-   * * When set to `"shift_down"`, clipboard data will be pasted in place of current selection, while all selected cells are moved down.
-   * * When set to `"shift_right"`, clipboard data will be pasted in place of current selection, while all selected cells are moved right.
-   *
-   * @type {String}
-   * @default 'overwrite'
-   */
-  pasteMode: 'overwrite',
-
-  /**
    * @description
    * Turns on saving the state of column sorting, column positions and column sizes in local storage.
    *
@@ -698,7 +746,7 @@ DefaultSettings.prototype = {
    * Lets you overwrite the default `isEmptyRow` method, which checks if row at the provided index is empty.
    *
    * @type {Function}
-   * @param {Number} row
+   * @param {Number} row Visual row index.
    * @returns {Boolean}
    */
   isEmptyRow(row) {
@@ -727,7 +775,7 @@ DefaultSettings.prototype = {
    * Lets you overwrite the default `isEmptyCol` method, which checks if column at the provided index is empty.
    *
    * @type {Function}
-   * @param {Number} col
+   * @param {Number} col Visual column index
    * @returns {Boolean}
    */
   isEmptyCol(col) {
@@ -828,8 +876,13 @@ DefaultSettings.prototype = {
    * If a string is provided, it may be one of the following predefined values:
    * * `autocomplete`,
    * * `checkbox`,
-   * * `text`,
-   * * `numeric`.
+   * * `html`,
+   * * `numeric`,
+   * * `password`.
+   * * `text`.
+   *
+   * Or you can [register](http://docs.handsontable.com/demo-custom-renderers.html) the custom renderer under specified name and use
+   * its name as an alias in your configuration.
    *
    * If a function is provided, it will receive the following arguments:
    * ```js
@@ -841,10 +894,17 @@ DefaultSettings.prototype = {
    * @example
    * ```js
    * ...
+   * Handsontable.renderers.registerRenderer('my.renderer', function(instance, TD, row, col, prop, value, cellProperties) {
+   *   TD.innerHTML = value;
+   * });
+   * ...
    * columns: [
    *   {
    *     editor: 'select',
    *     renderer: 'autocomplete' // as string
+   *   },
+   *   {
+   *     renderer: 'my.renderer' // custom renderer as an alias
    *   },
    *   {
    *     // renderer as custom function
@@ -908,23 +968,41 @@ DefaultSettings.prototype = {
 
   /**
    * @description
-   * Shortcut to define the combination of the cell renderer and editor for the column.
+   * Shortcut to define the combination of the cell renderer, editor and validator for the column, cell or whole table.
    *
    * Possible values:
-   *  * text
-   *  * [numeric](http://docs.handsontable.com/demo-numeric.html)
-   *  * [date](http://docs.handsontable.com/demo-date.html)
-   *  * [checkbox](http://docs.handsontable.com/demo-checkbox.html)
    *  * [autocomplete](http://docs.handsontable.com/demo-autocomplete.html)
+   *  * [checkbox](http://docs.handsontable.com/demo-checkbox.html)
+   *  * [date](http://docs.handsontable.com/demo-date.html)
    *  * [dropdown](http://docs.handsontable.com/demo-dropdown.html)
    *  * [handsontable](http://docs.handsontable.com/demo-handsontable.html)
+   *  * [numeric](http://docs.handsontable.com/demo-numeric.html)
+   *  * [password](http://docs.handsontable.com/demo-password.html)
+   *  * text
+   *  * [time](http://docs.handsontable.com/demo-time.html)
+   *
+   * Or you can register the custom cell type under specified name and use
+   * its name as an alias in your configuration.
    *
    * @example
    * ```js
    * ...
+   * Handsontable.cellTypes.registerCellType('my.type', {
+   *   editor: MyEditorClass,
+   *   renderer: function(hot, td, row, col, prop, value, cellProperties) {
+   *     td.innerHTML = value;
+   *   },
+   *   validator: function(value, callback) {
+   *     callback(value === 'foo' ? true : false);
+   *   }
+   * });
+   * ...
    * columns: [
    *   {
    *     type: 'text'
+   *   },
+   *   {
+   *     type: 'my.type' // an alias to custom type
    *   },
    *   {
    *     type: 'checkbox'
@@ -964,7 +1042,10 @@ DefaultSettings.prototype = {
    *  * [select](http://docs.handsontable.com/demo-select.html)
    *  * text
    *
-   * Or you can disable cell editing passing `false`.
+   * Or you can [register](http://docs.handsontable.com/tutorial-cell-editor.html#registering-an-editor) the custom editor under specified name and use
+   * its name as an alias in your configuration.
+   *
+   * To disable cell editing completely set `editor` property to `false`.
    *
    * @example
    * ```js
@@ -1047,10 +1128,8 @@ DefaultSettings.prototype = {
    * Possible values:
    * * `true` (to enable default options),
    * * `false` (to disable completely)
-   *
-   * or array of any available strings:
-   * * `["row_above", "row_below", "col_left", "col_right",
-   * "remove_row", "remove_col", "---------", "undo", "redo"]`.
+   * * an array of [predefined options](https://docs.handsontable.com/demo-context-menu.html#page-specific),
+   * * an object [with defined structure](http://docs.handsontable.com/demo-context-menu.html#page-custom)
    *
    * See [the context menu demo](http://docs.handsontable.com/demo-context-menu.html) for examples.
    *
@@ -1060,31 +1139,40 @@ DefaultSettings.prototype = {
    * // as a boolean
    * contextMenu: true
    * ...
-   * // as a array
+   * // as an array
    * contextMenu: ['row_above', 'row_below', '--------', 'undo', 'redo']
    * ...
    * ```
-   *
+   * ...
+   * // as an object (`name` attribute is required in the custom keys)
+   * contextMenu: {
+   *   items: {
+   *     "option1": {
+   *       name: "option1"
+   *     },
+   *     "option2": {
+   *       name: "option2",
+   *       submenu: {
+   *         items: [
+   *           {
+   *             key: "option2:suboption1",
+   *             name: "option2:suboption1",
+   *             callback: function(key, options) {
+   *               ...
+   *             }
+   *           },
+   *           ...
+   *         ]
+   *       }
+   *     }
+   *   }
+   * }
+   * ...
+   * ```
    * @type {Boolean|Array|Object}
    * @default undefined
    */
   contextMenu: void 0,
-
-  /**
-   * @description
-   * Defines new actions copy/paste for context menu. This functionality is dependent on ZeroClipboard from which you
-   * should pass the swf file path under `swfPath` object key.
-   *
-   * @example
-   * ```js
-   * ...
-   * contextMenuCopyPaste: {swfPath: '[path to file]'}
-   * ...
-   * ```
-   *
-   * @type {Object}
-   */
-  contextMenuCopyPaste: void 0,
 
   /**
    * @description
@@ -1098,9 +1186,9 @@ DefaultSettings.prototype = {
    * ```
    *
    * @type {Boolean}
-   * @default undefined
+   * @default true
    */
-  copyPaste: void 0,
+  copyPaste: true,
 
   /**
    * If `true`, undo/redo functionality is enabled.
@@ -1266,10 +1354,19 @@ DefaultSettings.prototype = {
   viewportColumnRenderingOffset: 'auto',
 
   /**
-   * A function or a regular expression, which will be used in the process of cell validation.
+   * A function, regular expression or a string, which will be used in the process of cell validation.
    * If a function is used, be sure to execute the callback argument with either `true` (`callback(true)`) if the validation passed
    * or with `false` (`callback(false)`), if the validation failed.
    * Note, that `this` in the function points to the `cellProperties` object.
+   *
+   * If a string is provided, it may be one of the following predefined values:
+   * * `autocomplete`,
+   * * `date`,
+   * * `numeric`,
+   * * `time`.
+   *
+   * Or you can [register](http://docs.handsontable.com/demo-data-validation.html) the validator function under specified name and use
+   * its name as an alias in your configuration.
    *
    * See more [in the demo](http://docs.handsontable.com/demo-data-validation.html).
    *
@@ -1288,8 +1385,14 @@ DefaultSettings.prototype = {
    *      validator: /^[0-9]$/ // regular expression
    *    }
    * ]
+   * // as a string
+   * columns: [
+   *    {
+   *      validator: 'numeric'
+   *    }
+   * ]
    * ```
-   * @type {Function|RegExp}
+   * @type {Function|RegExp|String}
    * @default undefined
    * @since 0.9.5
    */
@@ -1568,8 +1671,8 @@ DefaultSettings.prototype = {
   autoColumnSize: void 0,
 
   /**
-   * Enables or disables autoRowSize plugin. Default value is `undefined`, which has the same effect as `true`.
-   * Disabling this plugin can increase performance, as no size-related calculations would be performed.
+   * Enables or disables autoRowSize plugin. Default value is `undefined`, which has the same effect as `false` (disabled).
+   * Enabling this plugin can decrease performance, as size-related calculations would be performed.
    *
    * Row height calculations are divided into sync and async stages. Each of these stages has their own advantages and
    * disadvantages. Synchronous calculations are faster but they block the browser UI, while the slower asynchronous operations don't
